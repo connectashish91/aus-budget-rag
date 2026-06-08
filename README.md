@@ -109,6 +109,8 @@ ANTHROPIC_API_KEY=your_key_here
 Download Budget PDFs from [budget.gov.au](https://budget.gov.au) and place in `data/`:
 - Budget Paper No. 1 (bp1_2026-27.pdf)
 - Budget Paper No. 2 (bp2_2026-27.pdf)
+- Budget Paper No. 3 (bp3_2026-27.pdf)
+- Budget Paper No. 4 (bp4_2026-27.pdf)
 
 Run the app:
 ```bash

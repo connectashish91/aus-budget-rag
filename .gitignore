@@ -15,3 +15,5 @@ chroma_db/
 
 # Logs
 quality_log.jsonl
+
+data/

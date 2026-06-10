@@ -129,13 +129,23 @@ aus-budget-rag/
 ├── .gitignore
 └── README.md
 ```
+---
+
+## Prompt Regression Testing
+This repo includes a Promptfoo test suite (`promptfooconfig.yaml`) covering:
+- Happy path fact retrieval
+- Hallucination detection
+- Adversarial false premise handling
+- Partial context behaviour
+- Empty context safety
+
+Run with: `promptfoo eval`
 
 ---
 
 ## 🔮 Planned Improvements
 
 - [ ] Add Streamlit UI with visible evaluation scores
-- [ ] Implement Promptfoo regression testing for prompt changes
 - [ ] Improve cost of living retrieval with better chunking strategy
 - [ ] Add quality trend logging across sessions (drift detection)
 - [ ] Deploy to Hugging Face Spaces

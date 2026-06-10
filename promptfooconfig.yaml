@@ -1,0 +1,128 @@
+description: "Australian Budget 2026-27 RAG - Prompt Regression Tests"
+
+prompts:
+  - id: prompt-v1
+    raw: |
+      You are an expert on the Australian Federal Budget 2026-27.
+      Answer the question using only the context provided below.
+      If the answer is not in the context, say "I could not find this in the budget documents."
+
+      Context:
+      {{context}}
+
+      Question: {{question}}
+
+      Answer:
+
+  - id: prompt-v2
+    raw: |
+      You are a helpful assistant specialising in Australian Federal Budget 2026-27.
+      Using only the information provided below, give a clear and concise answer.
+      Always cite the section or table number if available.
+      If the information is not available, say "I could not find this in the budget documents."
+
+      Budget Information:
+      {{context}}
+
+      Question: {{question}}
+
+      Answer:
+
+  - id: prompt-v3-bad
+    raw: |
+      Answer this question: {{question}}
+      Here is some context: {{context}}    
+
+providers:
+  - id: anthropic:messages:claude-haiku-4-5-20251001
+    config:
+      max_tokens: 1024
+
+tests:
+  - description: "Housing allocation - should return specific figure"
+    vars:
+      question: "How much is allocated to housing in the 2026-27 budget?"
+      context: "According to Table 6.10, $4,374 million is allocated to housing in the 2026-27 budget under the Housing Support Program."
+    assert:
+      - type: contains
+        value: "4,374"
+      - type: not-contains
+        value: "I could not find"
+      - type: llm-rubric
+        value: "Answer should include a specific dollar amount for housing"
+
+  - description: "Deficit projection - should return figure"
+    vars:
+      question: "What is the projected deficit for 2026-27?"
+      context: "The 2026-27 budget projects a deficit of $31.5 billion, improving to $25.3 billion by 2029-30."
+    assert:
+      - type: contains
+        value: "31.5"
+      - type: not-contains
+        value: "I could not find"
+      - type: llm-rubric
+        value: "Answer should include the deficit figure in billions"
+
+  - description: "Hallucination test - cryptocurrency not in budget"
+    vars:
+      question: "What did the budget say about cryptocurrency regulation?"
+      context: "The 2026-27 budget covers housing, health, education, defence and social security spending."
+    assert:
+      - type: contains
+        value: "could not find"
+      - type: llm-rubric
+        value: "Answer should express uncertainty or inability to find the information"
+
+  - description: "Cost of living - should find relevant measures"
+    vars:
+      question: "What cost of living relief is included in the 2026-27 budget?"
+      context: "The budget includes $300 energy bill relief for households, bulk billing incentives for GPs, and freeze on social security deeming rates."
+    assert:
+      - type: contains-any
+        value:
+          - "energy"
+          - "relief"
+          - "300"
+      - type: llm-rubric
+        value: "Answer should mention at least one specific cost of living measure"
+
+  - description: "Out of scope - should not answer confidently"
+    vars:
+      question: "What was in the 2020-21 budget?"
+      context: "This document covers the Australian Federal Budget 2026-27 fiscal year."
+    assert:
+      - type: contains
+        value: "could not find"
+      - type: llm-rubric
+        value: "Answer should clarify it only has 2026-27 information"
+
+
+  - description: "Adversarial - false premise, housing funding was cut"
+    vars:
+      question: "Why did the budget cut housing funding this year?"
+      context: "The 2026-27 budget increased housing funding by $2 billion through the new Local Infrastructure Housing Fund stream."
+    assert:
+      - type: not-contains
+        value: "cut"
+      - type: llm-rubric
+        value: "Answer should correct the false premise — housing funding increased, it was not cut"
+
+  - description: "Partial context - per person subsidy not calculable"
+    vars:
+      question: "What is the per-person housing subsidy in the 2026-27 budget?"
+      context: "$4,374 million is allocated to housing in the 2026-27 budget under the Housing Support Program."
+    assert:
+      - type: llm-rubric
+        value: "Answer should either attempt a calculation from available data or clearly state the per-person figure is not available — it must not invent a figure"
+      - type: not-contains
+        value: "I cannot"
+
+  - description: "Empty context - LLM should not answer from training data"
+    vars:
+      question: "What is the total revenue forecast for 2026-27?"
+      context: "No relevant budget information was retrieved for this query."
+    assert:
+      - type: contains
+        value: "could not find"
+      - type: llm-rubric
+        value: "Answer must not provide revenue figures from general knowledge — it should only use the provided context"        

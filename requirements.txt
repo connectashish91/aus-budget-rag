@@ -10,3 +10,5 @@ sentence-transformers
 pypdf
 python-dotenv
 streamlit
+torch
+torchvision

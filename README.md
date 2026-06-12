@@ -9,6 +9,11 @@ evaluation framework that tests whether the AI is actually working correctly.
 
 ---
 
+## 🚀 Live Demo
+**[Try the app here](https://aus-budget-rag-9j5ybv8b4ktco9vfpaubxs.streamlit.app)**
+
+---
+
 ## 🎯 What Makes This Different
 
 Most RAG demos just show that the app answers questions. This one also asks:
@@ -58,6 +63,11 @@ The cost of living result (0.57) is a known retrieval quality issue —
 the chunking strategy misses some policy sections. This is documented
 as a future improvement.
 
+## 📸 Screenshots
+
+![Main App](screenshots/main_app.png)
+![Quality Dashboard](screenshots/quality_dashboard.png)
+
 ---
 
 ## 🧪 Evaluation Framework
@@ -88,6 +98,8 @@ Low retrieval quality = the LLM never had a chance to answer correctly.
 | Embeddings | SentenceTransformers all-MiniLM-L6-v2 (local, free) |
 | Document Loading | LangChain PyPDFLoader |
 | Language | Python 3.14 |
+| UI | Streamlit |
+| Prompt Testing | Promptfoo |
 
 ---
 
@@ -123,9 +135,16 @@ python app.py
 
 ```
 aus-budget-rag/
-├── app.py              # Main RAG application + evaluation framework
-├── data/               # Budget PDFs (download separately from budget.gov.au)
-├── requirements.txt    # Minimal dependencies
+├── app.py                      # Main RAG application + evaluation framework
+├── streamlit_app.py            # Streamlit UI with evaluation scores
+├── pages/
+│   └── quality_dashboard.py   # Quality trend + drift detection dashboard
+├── promptfooconfig.yaml        # Prompt regression test suite
+├── screenshots/
+│   ├── main_app.png            # Main Q&A interface with evaluation scores
+│   └── quality_dashboard.png  # Quality trend and drift detection dashboard
+├── data/                       # Budget PDFs (download from budget.gov.au)
+├── requirements.txt
 ├── .gitignore
 └── README.md
 ```
@@ -143,12 +162,21 @@ Run with: `promptfoo eval`
 
 ---
 
-## 🔮 Planned Improvements
+## ✅ Completed
+- [x] Streamlit UI with live evaluation scores dashboard
+- [x] Quality trend logging across sessions
+- [x] Drift detection and low quality alerts dashboard
+- [x] Prompt regression testing with Promptfoo
+- [x] Rate limiting for demo protection
+- [x] Deployed to Streamlit Community Cloud
 
-- [ ] Add Streamlit UI with visible evaluation scores
-- [ ] Improve cost of living retrieval with better chunking strategy
-- [ ] Add quality trend logging across sessions (drift detection)
-- [ ] Deploy to Hugging Face Spaces
+## 🔮 Planned Improvements
+- [ ] Conversational memory — multi-turn Q&A with session context
+- [ ] Better chunking strategy — fix cost of living retrieval (currently 0.57)
+- [ ] LangGraph test case generation agent — auto-generate Gherkin tests from requirements
+- [ ] Streamlit UI for Promptfoo results — visualise prompt regression test outcomes
+- [ ] Deploy Promptfoo CI pipeline via GitHub Actions
+
 
 ---
 

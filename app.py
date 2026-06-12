@@ -38,7 +38,10 @@ def split_documents(docs):
             ". ",                            # sentences
             ""                               # characters as last resort
         ]
-    )   
+    )
+    chunks = splitter.split_documents(docs)
+    print(f"Total chunks created: {len(chunks)}")
+    return chunks   
 
 # ── 3. Create vector store (local embeddings — no API cost) ──
 def create_vectorstore(chunks=None):

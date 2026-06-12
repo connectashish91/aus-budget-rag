@@ -35,6 +35,15 @@ def log_interaction(question, answer, faith_score, retrieval_score):
 
 chain, retriever = load_chain()
 
+# ── Rate limiting ─────────────────────────────────────────
+if "query_count" not in st.session_state:
+    st.session_state.query_count = 0
+
+if st.session_state.query_count >= 10:
+    st.warning("Demo limit reached — maximum 10 questions per session.")
+    st.stop()
+
+
 question = st.text_input("Ask a budget question:", placeholder="What is allocated to housing?")
 
 if question:

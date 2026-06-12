@@ -39,6 +39,8 @@ chain, retriever = load_chain()
 if "query_count" not in st.session_state:
     st.session_state.query_count = 0
 
+st.sidebar.metric("Questions asked", st.session_state.query_count)
+
 if st.session_state.query_count >= 10:
     st.warning("Demo limit reached — maximum 10 questions per session.")
     st.stop()
@@ -47,6 +49,8 @@ if st.session_state.query_count >= 10:
 question = st.text_input("Ask a budget question:", placeholder="What is allocated to housing?")
 
 if question:
+    st.session_state.query_count += 1
+    
     with st.spinner("Searching budget documents..."):
         answer = chain.invoke(question)
         sources = retriever.invoke(question)

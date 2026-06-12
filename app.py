@@ -1,4 +1,5 @@
 import os
+import streamlit as st
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from langchain_community.document_loaders import PyPDFLoader
@@ -8,6 +9,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.embeddings import SentenceTransformerEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+api_key = st.secrets.get("ANTHROPIC_API_KEY") if hasattr(st, "secrets") else os.getenv("ANTHROPIC_API_KEY")
 
 load_dotenv()
 
@@ -25,31 +29,46 @@ def load_documents(data_folder="data"):
 # ── 2. Split into chunks ──────────────────────────────────
 def split_documents(docs):
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
-    )
-    chunks = splitter.split_documents(docs)
-    print(f"Total chunks created: {len(chunks)}")
-    return chunks
+        chunk_size=1500,        # larger chunks = more context per retrieval
+        chunk_overlap=300,      # more overlap = less chance of splitting key sentences
+        separators=[
+            "\n## ", "\n### ", "\n#### ",  # respect document headers
+            "\n\n",                          # paragraph breaks
+            "\n",                            # line breaks
+            ". ",                            # sentences
+            ""                               # characters as last resort
+        ]
+    )   
 
 # ── 3. Create vector store (local embeddings — no API cost) ──
-def create_vectorstore(chunks):
+def create_vectorstore(chunks=None):
     embeddings = SentenceTransformerEmbeddings(
         model_name="all-MiniLM-L6-v2"
     )
-    vectorstore = Chroma.from_documents(
-        documents=chunks,
-        embedding=embeddings,
-        persist_directory="chroma_db"
-    )
-    print("Vector store created.")
+    
+    # If chroma_db already exists, load it — don't rebuild
+    if os.path.exists("chroma_db"):
+        print("Loading existing vector store...")
+        vectorstore = Chroma(
+            persist_directory="chroma_db",
+            embedding_function=embeddings
+        )
+    else:
+        print("Building new vector store...")
+        vectorstore = Chroma.from_documents(
+            documents=chunks,
+            embedding=embeddings,
+            persist_directory="chroma_db"
+        )
+    
+    print("Vector store ready.")
     return vectorstore
 
 # ── 4. Build RAG chain ────────────────────────────────────
 def build_qa_chain(vectorstore):
     llm = ChatAnthropic(
         model="claude-haiku-4-5-20251001",
-        api_key=os.getenv("ANTHROPIC_API_KEY"),
+        api_key=api_key,
         temperature=0.2,
         max_tokens=1024
     )

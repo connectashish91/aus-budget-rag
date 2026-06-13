@@ -117,24 +117,39 @@ def ask(chain, retriever, question):
     return answer, sources
 
 def evaluate_retrieval_quality(question, source_docs):
-    """
-    Did we actually retrieve relevant chunks?
-    Check if key question words appear in retrieved context.
-    """
-    question_keywords = [w.lower() for w in question.split() 
-                        if len(w) > 4 and w.lower() not in 
-                        ["what", "which", "where", "there", "their", "about", "budget"]]
+    # Better stopwords — more comprehensive
+    stopwords = {
+        "what", "which", "where", "there", "their", "about", 
+        "budget", "does", "will", "have", "with", "that", 
+        "this", "from", "into", "been", "were", "they",
+        "much", "many", "some", "more", "than", "when",
+        "how", "the", "and", "for", "are", "was"
+    }
+    
+    # Lower threshold from 4 to 3 characters
+    question_keywords = [
+        w.lower() for w in question.split() 
+        if len(w) > 3 and w.lower() not in stopwords
+    ]
+    
+    # If no keywords extracted — return neutral score not zero
+    if not question_keywords:
+        return {
+            "score": 0.5,
+            "keywords_searched": [],
+            "keywords_found": [],
+            "verdict": "Unable to evaluate — question too generic"
+        }
     
     context_text = " ".join([doc.page_content.lower() for doc in source_docs])
-    
     matches = [k for k in question_keywords if k in context_text]
-    score = len(matches) / len(question_keywords) if question_keywords else 0
+    score = len(matches) / len(question_keywords)
     
     return {
         "score": round(score, 2),
         "keywords_searched": question_keywords,
         "keywords_found": matches,
-        "verdict": "GOOD retrieval" if score > 0.5 else "POOR retrieval — chunks may be irrelevant"
+        "verdict": "GOOD retrieval" if score > 0.5 else "POOR retrieval"
     }
 
 def evaluate_faithfulness(answer, source_docs):

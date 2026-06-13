@@ -52,16 +52,12 @@ PDF Documents (Budget Papers 1 & 2)
 
 | Question | Faithfulness | Keyword Coverage | Hallucination Flag |
 |---|---|---|---|
-| Housing allocation ($4.3B) | 1.0 | 0.75 | Confident answer ✅ |
-| Budget deficit projection | 0.92 | 0.75 | Appropriate uncertainty ✅ |
-| Cost of living measures | 0.57 | 0.50 | Appropriate uncertainty ⚠️ |
-| Cryptocurrency (not in doc) | 0.83 | N/A | Appropriate uncertainty ✅ |
+| Housing allocation | 1.0 | 1 | Confident answer ✅ |
+| Budget deficit projection | 1.0 | 0.67 | Confident answer ✅ |
+| Cost of living relief measures | 0.88 | 0.75 | Confident answer ✅ |
+| Cryptocurrency (not in doc) | 0.46 | 0.0 | Appropriate uncertainty ✅ |
 
-**Overall average faithfulness: 0.79**
-
-The cost of living result (0.57) is a known retrieval quality issue —
-the chunking strategy misses some policy sections. This is documented
-as a future improvement.
+**Overall average faithfulness (in-scope questions): 0.96**
 
 ## 📸 Screenshots
 
@@ -171,6 +167,27 @@ Run with: `promptfoo eval`
 - [ ] Streamlit UI for Promptfoo results — visualise prompt regression test outcomes
 - [ ] Deploy Promptfoo CI pipeline via GitHub Actions
 
+
+---
+
+## ⚠️ Known Limitations
+
+### Retrieval Quality Metric
+The retrieval quality score uses keyword matching between the question 
+and retrieved chunks. This has a known blind spot — short or generic 
+questions may score 0 even when retrieval is working correctly, because 
+meaningful keywords get filtered out by the stopword list or length threshold.
+
+**Fix applied:** Lowered keyword length threshold and expanded stopword 
+list to reduce false zero scores. A more robust long-term solution would 
+use semantic similarity scoring (e.g. Ragas) rather than keyword matching.
+
+### Non-Determinism
+LLM outputs are probabilistic — the same question asked twice may 
+produce slightly different answers and evaluation scores. This is 
+expected behaviour, not a bug. The quality dashboard tracks score 
+trends over time to surface meaningful drift rather than one-off 
+variations.
 
 ---
 

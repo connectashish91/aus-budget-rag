@@ -162,7 +162,6 @@ Run with: `promptfoo eval`
 
 ## 🔮 Planned Improvements
 - [ ] Conversational memory — multi-turn Q&A with session context
-- [ ] Better chunking strategy — fix cost of living retrieval (currently 0.57)
 - [ ] LangGraph test case generation agent — auto-generate Gherkin tests from requirements
 - [ ] Streamlit UI for Promptfoo results — visualise prompt regression test outcomes
 - [ ] Deploy Promptfoo CI pipeline via GitHub Actions

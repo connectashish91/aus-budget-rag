@@ -76,36 +76,43 @@ def build_qa_chain(vectorstore):
         max_tokens=1024
     )
 
-    # Increase chunks retrieved for broad questions
     retriever = vectorstore.as_retriever(
-    search_type="mmr",  # Maximum Marginal Relevance — better for broad questions
-    search_kwargs={"k": 6, "fetch_k": 20}
+        search_type="mmr",
+        search_kwargs={"k": 6, "fetch_k": 20, "lambda_mult": 0.5}
     )
 
-
     prompt = ChatPromptTemplate.from_template("""
-    You are an expert on the Australian Federal Budget 2026-27.
-    Answer the question using only the context provided below.
-    If the answer is not in the context, say "I could not find this in the budget documents."
-    
-    Context:
-    {context}
-    
-    Question: {question}
+You are an expert on the Australian Federal Budget 2026-27.
+Answer the question using only the context provided below.
+If the answer is not in the context, say "I could not find this in the budget documents."
 
-     Answer:""")
+Context:
+{context}
+
+Question: {question}
+
+Answer:""")
 
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
 
+    def retrieve_with_expansion(question):
+        docs = expanded_retrieval(question, retriever, llm)
+        return format_docs(docs)
+
     chain = (
-        {"context": retriever | format_docs, "question": RunnablePassthrough()}
+        {"context": retrieve_with_expansion, "question": RunnablePassthrough()}
         | prompt
         | llm
         | StrOutputParser()
     )
 
-    return chain, retriever
+    # Return a wrapper retriever so streamlit_app.py's retriever.invoke() calls still work
+    class ExpandedRetrieverWrapper:
+        def invoke(self, question):
+            return expanded_retrieval(question, retriever, llm)
+
+    return chain, ExpandedRetrieverWrapper()
 
 # ── 5. Ask a question ─────────────────────────────────────
 def ask(chain, retriever, question):
@@ -180,6 +187,47 @@ def evaluate_hallucination(answer):
     flagged = any(phrase in answer_lower for phrase in uncertainty_phrases)
     return "appropriate uncertainty" if flagged else "confident answer"
 
+def expand_query(question, llm):
+    """Use the LLM to rewrite a vague question into specific search terms"""
+    prompt = f"""You are helping search Australian Federal Budget documents.
+Rewrite the following question into 3 specific search phrases that would 
+likely match actual budget document content. Focus on concrete policy names, 
+not abstract categories.
+
+Question: {question}
+
+Return only the 3 phrases, one per line, no numbering or explanation."""
+    
+    response = llm.invoke(prompt)
+    phrases = [line.strip() for line in response.content.split("\n") if line.strip()]
+    return phrases
+
+def expanded_retrieval(question, retriever, llm):
+    phrases = expand_query(question, llm)
+    print(f"Expanded '{question}' into: {phrases}")
+    
+    all_docs = []
+    seen_content = set()
+    
+    for phrase in phrases:
+        docs = retriever.invoke(phrase)
+        for doc in docs:
+            if doc.page_content not in seen_content:
+                seen_content.add(doc.page_content)
+                all_docs.append(doc)
+    
+    return all_docs[:6]  # cap at 6 for the final context
+
+def deduplicate_chunks(chunks):
+    seen = set()
+    unique_chunks = []
+    for chunk in chunks:
+        content_hash = hash(chunk.page_content.strip())
+        if content_hash not in seen:
+            seen.add(content_hash)
+            unique_chunks.append(chunk)
+    return unique_chunks
+
 def run_evaluation(chain, retriever):
     print("\n" + "="*50)
     print("AI QUALITY EVALUATION REPORT")
@@ -253,6 +301,9 @@ def run_evaluation(chain, retriever):
 if __name__ == "__main__":
     docs = load_documents()
     chunks = split_documents(docs)
+    print(f"Chunks before dedup: {len(chunks)}")
+    chunks = deduplicate_chunks(chunks)
+    print(f"Chunks after dedup: {len(chunks)}")
     vectorstore = create_vectorstore(chunks)
     chain, retriever = build_qa_chain(vectorstore)
 

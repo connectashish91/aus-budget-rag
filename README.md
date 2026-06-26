@@ -224,6 +224,38 @@ Run with: `promptfoo eval`
 
 ---
 
+## 🤖 AI Test Case Generation Agent (LangGraph)
+
+A LangGraph-based agent that takes a plain-English requirement and produces 
+structured Gherkin test cases through a multi-step process: **generate → 
+review → refine**, looping up to two refinement passes when the review 
+step identifies coverage gaps.
+
+### Why this matters beyond just "using LangGraph"
+Rather than a single LLM call producing test cases, the agent's review 
+step critiques its own first draft — and is given the project's *existing* 
+test suite (positive, negative, edge, hallucination, adversarial) as 
+context, so it can identify genuinely new gaps rather than repeating 
+scenarios that already exist.
+
+### What it actually found
+Run against this project's full behavioural requirements — grounding, 
+out-of-scope refusal, prompt injection resistance, and temporal accuracy — 
+the agent independently flagged gaps that line up with two of this 
+project's own documented open findings (see Known Limitations): test 
+coverage for effective-date accuracy, and test coverage for partial 
+compliance with embedded adversarial instructions.
+
+See [agent_generated_tests_example.md](agent_generated_tests_example.md) 
+for a full example run, including the review feedback and final test cases.
+
+Run it yourself:
+```bash
+python test_generator_agent.py
+```
+---
+
+
 ## ✅ Completed
 - [x] Streamlit UI with live evaluation scores dashboard
 - [x] Quality trend logging across sessions
@@ -235,12 +267,14 @@ Run with: `promptfoo eval`
 - [x] Retrieval deduplication (content-hash, fixed duplicate chunk problem)
 - [x] LLM-based query expansion (fixed semantic retrieval gap on abstract questions)
 - [x] DeepEval test suite — 5 categories, category-appropriate metrics (38+ test cases)
+- [x] LangGraph test case generation agent — generate, review, refine loop with existing-suite context
 
 ## 🔮 Planned Improvements
 - [ ] Investigate and fix temporal accuracy issue (model misstates policy effective dates)
 - [ ] Harden prompt against injection ("answer even if information is missing")
+- [ ] Add test coverage for program name disambiguation (near-identical program names)
+- [ ] Add test coverage for short-duration, time-bound funding measures
 - [ ] Conversational memory — multi-turn Q&A with session context
-- [ ] LangGraph test case generation agent — auto-generate Gherkin tests from requirements
 - [ ] Streamlit UI for Promptfoo results — visualise prompt regression test outcomes
 - [ ] Deploy Promptfoo CI pipeline via GitHub Actions
 

@@ -63,7 +63,7 @@ if question:
         
         # Show answer
         st.markdown("### Answer")
-        st.write(answer)
+        st.write(answer.replace("$",'\\$'))
         
         # Show evaluation scores
         st.markdown("### Quality Evaluation")
